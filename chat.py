@@ -46,8 +46,9 @@ def main():
 
     # Create a button to send the user input
     if st.button("Send") or (not st.session_state.enter_pressed and user_input):
-        # Add the user's message to the chat history
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        # Add the user's message to the chat history if it's not empty
+        if user_input.strip():
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
 
         # Update the chat session with the user's input
         st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
