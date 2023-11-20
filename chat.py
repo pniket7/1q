@@ -55,6 +55,9 @@ def main():
         # Get the chatbot's response from the last message in the history
         advisor_response = st.session_state.sessionAdvisor.messages[-1]['content'] if st.session_state.sessionAdvisor.messages else ""
 
+        # Remove newlines and extra spaces from the response
+        advisor_response = advisor_response.replace('\n', ' ').strip()
+
         # Add the chatbot's response to the chat history
         st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
 
