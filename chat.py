@@ -3,7 +3,7 @@ import streamlit as st
 from utils import ChatSession
 
 def main():
-    st.title('Financial Bank Advisor Chatbot')
+    st.title('Financial Advisor Chatbot')
 
     # Load the OpenAI API key from Streamlit secrets
     openai.api_key = st.secrets["api_key"]
