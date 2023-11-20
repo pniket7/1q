@@ -33,11 +33,12 @@ def main():
 
     # Display the chat history
     chat_messages = ""
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-        else:
-            chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+    if st.session_state.chat_history:
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+            else:
+                chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
     
     chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
@@ -46,11 +47,8 @@ def main():
 
     # Create a button to send the user input
     if st.button("Send") or (not st.session_state.enter_pressed and user_input):
-        # Add the user's message to the chat history only if it's not empty or if it's the first message
-        if user_input.strip() and (not st.session_state.chat_history or st.session_state.chat_history[-1]["role"] != "user"):
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-        elif user_input.strip():
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
+        # Add the user's message to the chat history
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
         # Update the chat session with the user's input
         st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
@@ -66,12 +64,13 @@ def main():
 
         # Display the chat history including new messages
         chat_messages = ""
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-            else:
-                chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-    
+        if st.session_state.chat_history:
+            for message in st.session_state.chat_history:
+                if message["role"] == "user":
+                    chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+                else:
+                    chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+        
         chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
         # Set enter_pressed to True
