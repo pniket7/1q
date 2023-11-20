@@ -30,14 +30,15 @@ def main():
 
     # Display chat messages from history on app rerun
     chat_container = st.empty()
+
+    # Display the chat history
     chat_messages = ""
     for message in st.session_state.chat_history:
         if message["role"] == "user":
-            chat_messages += f'<p style="background-color: #9400D3; color: white; padding: 10px; border-radius: 10px; float: left; clear: both;">🧑 {message["content"]}</p>'
+            chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
         else:
-            chat_messages += f'<p style="background-color: #0084ff; color: white; padding: 10px; border-radius: 10px; float: right; clear: both;">🤖 {message["content"]}</p>'
+            chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
     
-    # Render the chat messages
     chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
     # Accept user input
@@ -57,18 +58,14 @@ def main():
         # Add the chatbot's response to the chat history
         st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
 
-        # Clear the chat container
-        chat_container.empty()
-
-        # Display the latest messages
+        # Display the chat history including new messages
         chat_messages = ""
         for message in st.session_state.chat_history:
             if message["role"] == "user":
-                chat_messages += f'<p style="background-color: #9400D3; color: white; padding: 10px; border-radius: 10px; float: left; clear: both;">🧑 {message["content"]}</p>'
+                chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
             else:
-                chat_messages += f'<p style="background-color: #0084ff; color: white; padding: 10px; border-radius: 10px; float: right; clear: both;">🤖 {message["content"]}</p>'
-        
-        # Render the updated chat messages
+                chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+    
         chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
         # Set enter_pressed to True
@@ -92,9 +89,7 @@ def main():
         st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
 
         # Clear the chat container for the new conversation
-        chat_container.empty()
-
-        # Display a message for a new conversation
+        chat_container.markdown("", unsafe_allow_html=True)
         st.markdown("New conversation started. You can now enter your query.")
 
     # Create a button to exit the current conversation
@@ -102,10 +97,8 @@ def main():
         # Clear the chat history to exit the chat
         st.session_state.chat_history = []
 
-        # Clear the chat container for exiting the chat
-        chat_container.empty()
-
-        # Display a message for exiting the chat
+        # Clear the chat container for the exited chat
+        chat_container.markdown("", unsafe_allow_html=True)
         st.markdown("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
 if __name__ == "__main__":
