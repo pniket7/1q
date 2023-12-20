@@ -2,91 +2,329 @@ import openai
 import streamlit as st
 from utils import ChatSession
 
-def initialize_sessionAdvisor():
-    advisor = ChatSession(gpt_name='Advisor')
-    advisor.inject(
-        line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
-        role="user"
-    )
-    advisor.inject(line="Ok.", role="assistant")
-    return advisor
-
 def main():
-    st.title('Financial Advisor Chatbot')
+    st.title('Appointment Scheduler Chatbot')
 
-    # Load the OpenAI API key from Streamlit secrets
     openai.api_key = st.secrets["api_key"]
 
-    # Initialize chat history in session state if it doesn't exist
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Initialize sessionAdvisor if it doesn't exist or is set to None
-    if "sessionAdvisor" not in st.session_state or st.session_state.sessionAdvisor is None:
-        st.session_state.sessionAdvisor = initialize_sessionAdvisor()
+    if "sessionAdvisor" not in st.session_state:
+        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
+        # Insert initial information for appointment scheduler
+        st.session_state.sessionAdvisor.inject(
+            line="""You are an appointment scheduler chatbot app for scheduling user appointments with dentist doctors. Your main goal is to converse with the user and schedule an appointment for the user with the dentist. The user should be able to get details from you about the doctor's name, availability, and services offered (root canal, teeth cleaning, etc.). After collecting the details and getting confirmation from the user, you should give a message to the user about their appointment confirmation and appointment details which includes any random specific time from the available hours of that particular doctor. Be brief in your responses. Proceed with follow-up questions based solely on the user's immediate response, maintaining a strictly sequential flow. Ask one question at a time, waiting for and responding to each user input individually. Ensure that each response from the advisor contains only a single query or request for information, refraining from posing multiple questions or requests within the same reply. This is the data in JSON format about the doctor details - 
+            {
+              "doctors": [
+                {
+                  "name": "Dr. John Smith",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "10am-6pm"
+                    },
+                    {
+                      "day": "Tuesday",
+                      "timings": "10am-6pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "10am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Roger Blake",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "11am-3pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "11am-3pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Ryan Harris",
+                  "service": "Tooth Cleaning",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "9am-6pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "9am-6pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Millie James",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Friday",
+                      "timings": "9am-7pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-7pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Crystal Miles",
+                  "service": "Tooth Cleaning",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "9am-3pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "9am-3pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-3pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Jessica Brown",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Tuesday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "8am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Jenna Starc",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "10am-7pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "10am-7pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. David Ness",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Thursday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "8am-6pm"
+                    }
+                  ]
+                }
+              ]
+            }""",
+            role="user"
+        )
+        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
 
-    # Display chat messages from history on app rerun
-    chat_container = st.empty()
+    # Function to create a styled chat bubble using HTML and CSS
+    def styled_chat_bubble(content, role):
+        if role == "user":
+            return f'<div style="background-color: #00008B; padding: 10px; border-radius: 15px; margin: 5px 20px;">🧑 {content}</div>'
+        else:
+            return f'<div style="background-color: #006400; padding: 10px; border-radius: 15px; margin: 5px 20px;">🤖 {content}</div>'
 
-    # Display the chat history
-    chat_messages = ""
-    if st.session_state.chat_history:
-        for message in st.session_state.chat_history:
-            role_color = "#9400D3" if message["role"] == "user" else "#0084ff"
-            alignment = "left" if message["role"] == "user" else "right"
-            chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+    for message in st.session_state.chat_history:
+        if message["role"] == "user":
+            st.markdown(styled_chat_bubble(message['content'], "user"), unsafe_allow_html=True)
+        else:
+            st.markdown(styled_chat_bubble(message['content'], "assistant"), unsafe_allow_html=True)
 
-    chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
-
-    # Accept user input
     user_input = st.text_input("Type your message here...")
 
-    # Create a button to send the user input
-    if st.button("Send") and user_input:
-        # Add the user's message to the chat history
+    if st.button("Send"):
         st.session_state.chat_history.append({"role": "user", "content": user_input})
-
-        # Update the chat session with the user's input
         st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
-
-        # Get the chatbot's response from the last message in the history
         advisor_response = st.session_state.sessionAdvisor.messages[-1]['content'] if st.session_state.sessionAdvisor.messages else ""
-
-        # Remove newlines and extra spaces from the response
-        advisor_response = advisor_response.replace('\n', ' ').strip()
-
-        # Add the chatbot's response to the chat history
         st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
+        st.markdown(styled_chat_bubble(advisor_response, "assistant"), unsafe_allow_html=True)
 
-        # Display the chat history including new messages
-        chat_messages = ""
-        if st.session_state.chat_history:
-            for message in st.session_state.chat_history:
-                role_color = "#9400D3" if message["role"] == "user" else "#0084ff"
-                alignment = "left" if message["role"] == "user" else "right"
-                chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-        
-        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
-
-    # Create a button to start a new conversation
     if st.button("New Chat"):
-        # Clear the chat history to start a new conversation
         st.session_state.chat_history = []
-
-        # Reinitialize sessionAdvisor for a new conversation
-        st.session_state.sessionAdvisor = initialize_sessionAdvisor()
-
-        # Clear the chat container for the new conversation
-        chat_container.markdown("", unsafe_allow_html=True)
+        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
+        st.session_state.sessionAdvisor.inject(
+            line="""You are an appointment scheduler chatbot app for scheduling user appointments with dentist doctors. Your main goal is to converse with the user and schedule an appointment for the user with the dentist. The user should be able to get details from you about the doctor's name, availability, and services offered (root canal, teeth cleaning, etc.). After collecting the details and getting confirmation from the user, you should give a message to the user about their appointment confirmation and appointment details which includes any random specific time from the available hours of that particular doctor. Be brief in your responses. Proceed with follow-up questions based solely on the user's immediate response, maintaining a strictly sequential flow. Ask one question at a time, waiting for and responding to each user input individually. Ensure that each response from the advisor contains only a single query or request for information, refraining from posing multiple questions or requests within the same reply. This is the data in JSON format about the doctor details - 
+            {
+              "doctors": [
+                {
+                  "name": "Dr. John Smith",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "10am-6pm"
+                    },
+                    {
+                      "day": "Tuesday",
+                      "timings": "10am-6pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "10am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Roger Blake",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "11am-3pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "11am-3pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Ryan Harris",
+                  "service": "Tooth Cleaning",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "9am-6pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "9am-6pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Millie James",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Friday",
+                      "timings": "9am-7pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-7pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Crystal Miles",
+                  "service": "Tooth Cleaning",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "9am-3pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "9am-3pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "9am-3pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Jessica Brown",
+                  "service": "Tooth Replacement",
+                  "availability": [
+                    {
+                      "day": "Monday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Tuesday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "8am-6pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. Jenna Starc",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Wednesday",
+                      "timings": "10am-7pm"
+                    },
+                    {
+                      "day": "Thursday",
+                      "timings": "10am-7pm"
+                    }
+                  ]
+                },
+                {
+                  "name": "Dr. David Ness",
+                  "service": "Root Canal",
+                  "availability": [
+                    {
+                      "day": "Thursday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Friday",
+                      "timings": "8am-6pm"
+                    },
+                    {
+                      "day": "Saturday",
+                      "timings": "8am-6pm"
+                    }
+                  ]
+                }
+              ]
+            }""",
+            role="user"
+        )
+        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
         st.markdown("New conversation started. You can now enter your query.")
 
-    # Create a button to exit the current conversation
     if st.button("Exit Chat"):
-        # Clear the chat history to exit the chat
         st.session_state.chat_history = []
-
-        # Clear the chat container for the exited chat
-        chat_container.markdown("", unsafe_allow_html=True)
         st.markdown("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
 if __name__ == "__main__":
